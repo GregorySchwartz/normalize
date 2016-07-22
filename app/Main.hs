@@ -3,80 +3,70 @@ Gregory W. Schwartz
 
 Blah's the blah in the blah
 -}
+
+{-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE DataKinds #-}
+{-# LANGUAGE TypeOperators #-}
+{-# LANGUAGE OverloadedStrings #-}
+
 module Main where
 
 -- Standard
+import Data.Maybe
 import qualified Data.Map.Strict as Map
 
 -- Cabal
 import qualified Data.Vector as V
 import qualified Data.ByteString.Lazy.Char8 as CL
+import qualified Data.Text as T
 import qualified Data.Csv as CSV
-import Options.Applicative
+import Options.Generic
 
 -- Local
-import qualified Types as Types
+import Types
 import Load
 import Normalize
 
 -- | Command line arguments
-data Options = Options { labelField  :: Maybe Int
-                       , sampleField :: Int
-                       , entityField :: Int
-                       , valueField  :: Int
-                       , method      :: Types.Method
+data Options = Options { labelField  :: Maybe T.Text
+                                    <?> "The column containing the label for the entry."
+                       , sampleField :: T.Text
+                                    <?> "The column containing the sample for the entry."
+                       , entityField :: T.Text
+                                    <?> "The column containing the id for the entity in the entry."
+                       , valueField  :: T.Text
+                                    <?> "The column field containing the value for the entry."
+                       , method      :: Maybe String
+                                    <?> "([StandardScore]) The method for standardization of the samples."
                        }
+               deriving (Generic, Show)
 
--- | Command line options
-options :: Parser Options
-options = Options
-      <$> optional ( option auto
-          ( long "label-field"
-         <> short 'l'
-         <> metavar "FIELD"
-         <> help "The 1 indexed field containing the label for the entry."
-          )
-        )
-      <*> option auto
-          ( long "sample-field"
-         <> short 's'
-         <> metavar "FIELD"
-         <> help "The 1 indexed field containing the sample for the entry."
-          )
-      <*> option auto
-          ( long "entity-field"
-         <> short 'e'
-         <> metavar "FIELD"
-         <> help "The 1 indexed field containing the id for the entity in the\
-                 \ entry."
-          )
-      <*> option auto
-          ( long "value-field"
-         <> short 'v'
-         <> metavar "FIELD"
-         <> help "The 1 indexed field containing the value for the entry."
-          )
-      <*> option auto
-          ( long "method"
-         <> short 'm'
-         <> metavar "[StandardScore]"
-         <> value Types.StandardScore
-         <> help "The method for standardization of the samples."
-          )
+instance ParseRecord Options
 
-mainFunc :: Options -> IO ()
-mainFunc opts = do
-    body <- fmap (either error id . CSV.decode CSV.HasHeader) CL.getContents
+main :: IO ()
+main = do
+    opts <- getRecord "normalize, Gregory W. Schwartz.\
+                      \ Normalizes the data (entities, for instance genes or\
+                      \ proteins) by column (samples)."
+
+    -- No header so we can READ the header (ugh).
+    csvContents <- fmap
+                    (either error id . CSV.decode CSV.NoHeader)
+                    CL.getContents
 
     let entities = V.map ( csvRowToEntity
-                            (fmap Types.Field $ labelField opts)
-                            (Types.Field $ sampleField opts)
-                            (Types.Field $ entityField opts)
-                            (Types.Field $ valueField opts)
+                            (V.head csvContents)
+                            (fmap Field . unHelpful $ labelField opts)
+                            (Field . unHelpful $ sampleField opts)
+                            (Field . unHelpful $ entityField opts)
+                            (Field . unHelpful $ valueField opts)
                          )
-                   body
+                    . V.tail
+                    $ csvContents
         sampleMap = toSampleMap entities
-        result    = normalize (method opts) sampleMap
+        result    = normalize
+                        (maybe StandardScore read . unHelpful . method $ opts)
+                        sampleMap
         formatted = CL.append (CL.pack "label,sample,entity,value")
                   . CL.dropWhile (/= '\n')
                   . CSV.encodeDefaultOrderedByName
@@ -87,12 +77,3 @@ mainFunc opts = do
     CL.putStrLn formatted
 
     return ()
-
-main :: IO ()
-main = execParser opts >>= mainFunc
-  where
-    opts = info (helper <*> options)
-      ( fullDesc
-     <> progDesc "Normalizes the data (entities, for instance genes or\
-                 \ proteins) by column (samples)."
-     <> header "normalize, Gregory W. Schwartz" )

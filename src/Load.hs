@@ -21,25 +21,33 @@ import qualified Data.Sequence as Seq
 import qualified Data.Vector as V
 import qualified Data.Text as T
 import qualified Data.Text.Read as T
+import qualified Data.Csv as CSV
 
 -- Local
 import Types
 
 -- | Convert CSV entries into entities.
-csvRowToEntity :: Maybe Field
+csvRowToEntity :: V.Vector T.Text
+               -> Maybe Field
                -> Field
                -> Field
                -> Field
                -> V.Vector T.Text
                -> Entity
-csvRowToEntity labelF (Field sampleF) (Field entityF) (Field valueF) row =
+csvRowToEntity header labelF sampleF entityF valueF row =
     Entity
         { _label  =
-            fromMaybe "" . fmap ((row V.!) . (+ (-1)) . unField) $ labelF
-        , _sample = row V.! (sampleF - 1)
-        , _entity = row V.! (entityF - 1)
-        , _value  = either error fst . T.double $ row V.! (valueF - 1)
+            fromMaybe "" . fmap ((row V.!) . flip fieldIndex header) $ labelF
+        , _sample = row V.! (fieldIndex sampleF header)
+        , _entity = row V.! (fieldIndex entityF header)
+        , _value  = either error fst . T.double $ row V.! (fieldIndex valueF header)
         }
+
+-- | Get the index of a field in the header of a csv file.
+fieldIndex :: Field -> V.Vector T.Text -> Int
+fieldIndex (Field f) =
+    fromMaybe (error ("Column " ++ T.unpack f ++ " not found"))
+        . V.findIndex (== f)
 
 -- | Convert entities to a sample map, where each sample contains
 -- a collection of entities.

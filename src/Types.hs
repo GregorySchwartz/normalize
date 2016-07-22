@@ -21,7 +21,7 @@ import Control.Lens
 
 
 -- Basic
-newtype Field  = Field { unField :: Int }
+newtype Field  = Field { unField :: T.Text } deriving (Show, Generic)
 newtype Label  = Label { unLabel :: T.Text } deriving (Eq, Ord)
 newtype Sample = Sample { unSample :: T.Text } deriving (Eq, Ord, Show)
 
