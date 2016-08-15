@@ -36,11 +36,12 @@ csvRowToEntity :: V.Vector T.Text
                -> Entity
 csvRowToEntity header labelF sampleF entityF valueF row =
     Entity
-        { _label  =
+        { _label   =
             fromMaybe "" . fmap ((row V.!) . flip fieldIndex header) $ labelF
-        , _sample = row V.! (fieldIndex sampleF header)
-        , _entity = row V.! (fieldIndex entityF header)
-        , _value  = either error fst . T.double $ row V.! (fieldIndex valueF header)
+        , _sample  = row V.! (fieldIndex sampleF header)
+        , _entity  = row V.! (fieldIndex entityF header)
+        , _value   =
+            either error fst . T.double $ row V.! (fieldIndex valueF header)
         }
 
 -- | Get the index of a field in the header of a csv file.
