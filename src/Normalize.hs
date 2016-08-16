@@ -63,11 +63,11 @@ normalizeBySample normSampleString =
             )
         . Map.mapWithKey (tagDivisors normSampleString)
 
--- | Partition divisors and divisees and divide.
+-- | Partition divisors and dividends and divide.
 groupDivisors :: V.Vector (Divisor, Entity) -> V.Vector [(Divisor, Entity)]
 groupDivisors = V.fromList . groupBy ((==) `on` snd) . sort . V.toList
 
--- | The actual division of divisee by divisor.
+-- | The actual division of dividend by divisor.
 divideBySample :: [(Divisor, Entity)] -> Entity
 divideBySample [((Divisor True), x), ((Divisor False), y)] = 
     y { _value = _value y / _value x }
