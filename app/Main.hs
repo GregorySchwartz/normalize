@@ -36,6 +36,8 @@ data Options = Options { labelField  :: Maybe T.Text
                                     <?> "The column containing the id for the entity in the entry."
                        , valueField  :: T.Text
                                     <?> "The column field containing the value for the entry."
+                       , entityDiff  :: Maybe T.Text
+                                    <?> "When comparing entities that are the same, ignore the text after this separator. Used for the bySample normalization. For example, if we have a strings ARG29_5 and ARG29_7 that we both want to be divided by another entity in another sample called ARG29, we would set this string to be \"_\""
                        , bySample    :: Maybe T.Text
                                     <?> "Normalize as usual, but at the end use this string to differentiate the sample field from the normalization samples, then divide the matching samples with these samples and renormalize. For instance, if we want to normalize \"normalizeMe\" by \"normalizeMeByThis\", we would set this string to be \"ByThis\" so the normalized values from \"normalizeMe\" are divided by the normalized values from \"normalizeMeByThis\". This string must make the latter become the former, so \"By\" would not work as it would become \"normalizeMeThis\"."
                        , method      :: Maybe String
@@ -71,7 +73,13 @@ main = do
         result = (\ x
                  -> maybe
                         x
-                        (normalizeMap . flip normalizeBySample x)
+                        ( normalizeMap
+                        . flip
+                            ( normalizeBySample
+                                (fmap EntitySep . unHelpful . entityDiff $ opts)
+                            )
+                            x
+                        )
                         (fmap NormSampleString . unHelpful . bySample $ opts)
                  )
                . normalizeMap
