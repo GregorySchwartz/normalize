@@ -27,7 +27,7 @@ newtype Field            = Field { unField :: T.Text } deriving (Show, Generic)
 newtype Label            = Label { unLabel :: T.Text } deriving (Eq, Ord)
 newtype Sample           = Sample { unSample :: T.Text }
                            deriving (Eq, Ord, Show)
-newtype Divisor          = Divisor { unDivisor :: Bool } deriving (Eq, Ord)
+newtype Divisor          = Divisor { unDivisor :: Bool } deriving (Eq, Ord, Show)
 newtype NormSampleString = NormSampleString { unNormSampleString :: T.Text }
                            deriving (Eq, Ord, Show)
 

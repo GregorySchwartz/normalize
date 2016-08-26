@@ -77,7 +77,7 @@ groupDivisors = V.fromList
               . fmap (over _2 Seq.singleton)
               . V.toList
 
--- | The actual division of dividends by divisor.
+-- | The actual subtraction (Z scores) of dividends by divisor.
 divideBySample :: [(Divisor, Entity)] -> [Entity]
 divideBySample []       = error $ "Empty division in divideBySample."
 divideBySample [(_, x)] =
@@ -87,7 +87,7 @@ divideBySample ((Divisor True, x):(Divisor True, y):_) =
          ++ (show x)
          ++ " and "
          ++ (show y)
-divideBySample ((Divisor True, x):xs) = fmap ((//~) value (_value x) . snd) xs
+divideBySample ((Divisor True, x):xs) = fmap ((-~) value (_value x) . snd) xs
 
 -- | Tag all divisors in a sample.
 tagDivisors :: Maybe EntitySep
