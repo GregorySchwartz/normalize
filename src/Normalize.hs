@@ -88,7 +88,7 @@ divideBySample :: SynonymFlag -> [(Divisor, Entity)] -> [Entity]
 divideBySample _ []                                    =
     error $ "Empty division in divideBySample."
 divideBySample _ [(Divisor True, _)]                   = []
-divideBySample _ [(Divisor False, x)]                  = []
+divideBySample _ ((Divisor False, _):_)                = []
 divideBySample (SynonymFlag True) all@((Divisor True, x):(Divisor True, y):xs) =
     divideBySample (SynonymFlag False)
         . (:xs)
