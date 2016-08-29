@@ -1,6 +1,6 @@
 name:                normalize
-version:             0.1.0.0
-synopsis:            Insert synopsis here
+version:             0.1.0.1
+synopsis:            Normalize data using a variety of methods.
 description:         Please see README.md
 homepage:            http://github.com/GregorySchwartz/normalize#readme
 license:             GPL-3

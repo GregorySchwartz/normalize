@@ -79,15 +79,18 @@ groupDivisors = V.fromList
 
 -- | The actual subtraction (Z scores) of dividends by divisor.
 divideBySample :: [(Divisor, Entity)] -> [Entity]
-divideBySample []       = error $ "Empty division in divideBySample."
-divideBySample [(_, x)] =
+divideBySample []                                      =
+    error $ "Empty division in divideBySample."
+divideBySample [(Divisor True, _)]                     = []
+divideBySample [(Divisor False, x)]                    =
     error $ "No pair found for: " ++ show x
-divideBySample ((Divisor True, x):(Divisor True, y):_) = 
+divideBySample ((Divisor True, x):(Divisor True, y):_) =
     error $ "Too many divisors found including: "
          ++ (show x)
          ++ " and "
          ++ (show y)
-divideBySample ((Divisor True, x):xs) = fmap ((-~) value (_value x) . snd) xs
+divideBySample ((Divisor True, x):xs)                  =
+    fmap ((-~) value (_value x) . snd) xs
 
 -- | Tag all divisors in a sample.
 tagDivisors :: Maybe EntitySep
@@ -105,12 +108,13 @@ tagDivisor :: Maybe EntitySep
            -> Entity
            -> (EntityName, (Divisor, Entity))
 tagDivisor sep (NormSampleString needle) (Sample haystack) !e =
-    over
-        (_2 . _2 . sample)
-        (T.replace needle "")
-        (entityName sep, (Divisor . T.isInfixOf needle $ haystack, e))
+    ( entityName sep
+    , ( Divisor . T.isInfixOf needle $ haystack
+      , over sample (T.replace needle "") e
+      )
+    )
   where
     entityName :: (Maybe EntitySep) -> EntityName
-    entityName Nothing       = EntityName . _entity $ e
+    entityName Nothing              = EntityName . _entity $ e
     entityName (Just (EntitySep s)) =
         EntityName . head . T.splitOn s . _entity $ e
