@@ -28,19 +28,21 @@ import Load
 import Normalize
 
 -- | Command line arguments
-data Options = Options { labelField  :: Maybe T.Text
+data Options = Options { labelField             :: Maybe T.Text
                                     <?> "The column containing the label for the entry."
-                       , sampleField :: T.Text
+                       , sampleField            :: T.Text
                                     <?> "The column containing the sample for the entry."
-                       , entityField :: T.Text
+                       , entityField            :: T.Text
                                     <?> "The column containing the id for the entity in the entry."
-                       , valueField  :: T.Text
+                       , valueField             :: T.Text
                                     <?> "The column field containing the value for the entry."
-                       , entityDiff  :: Maybe T.Text
+                       , entityDiff             :: Maybe T.Text
                                     <?> "When comparing entities that are the same, ignore the text after this separator. Used for the bySample normalization. For example, if we have a strings ARG29_5 and ARG29_7 that we both want to be divided by another entity in another sample called ARG29, we would set this string to be \"_\""
-                       , bySample    :: Maybe T.Text
+                       , bySample               :: Maybe T.Text
                                     <?> "Normalize as usual, but at the end use this string to differentiate the sample field from the normalization samples, then divide the matching samples with these samples and renormalize. For instance, if we want to normalize \"normalizeMe\" by \"normalizeMeByThis\", we would set this string to be \"ByThis\" so the normalized values from \"normalizeMe\" are divided by the normalized values from \"normalizeMeByThis\". This string must make the latter become the former, so \"By\" would not work as it would become \"normalizeMeThis\"."
-                       , method      :: Maybe String
+                       , bySampleRemoveSynonyms :: Bool
+                                    <?> "When normalizing by sample, if the divisor appears multiple times we assume those are synonyms. Here, we would remove the synonym with the smaller intensity. If not set, errors out and provides the synonym name."
+                       , method                 :: Maybe String
                                     <?> "([StandardScore]) The method for standardization of the samples."
                        }
                deriving (Generic, Show)
@@ -58,29 +60,28 @@ main = do
                     (either error id . CSV.decode CSV.NoHeader)
                     CL.getContents
 
-    let entities = V.map ( csvRowToEntity
-                            (V.head csvContents)
-                            (fmap Field . unHelpful $ labelField opts)
-                            (Field . unHelpful $ sampleField opts)
-                            (Field . unHelpful $ entityField opts)
-                            (Field . unHelpful $ valueField opts)
-                         )
-                    . V.tail
-                    $ csvContents
-        sampleMap  = toSampleMap entities
+    let synonymFlag  = SynonymFlag . unHelpful . bySampleRemoveSynonyms $ opts
+        eSep         = fmap EntitySep . unHelpful . entityDiff $ opts
+        sampleDiff   = fmap NormSampleString . unHelpful . bySample $ opts
+        entities     = V.map ( csvRowToEntity
+                                (V.head csvContents)
+                                (fmap Field . unHelpful $ labelField opts)
+                                (Field . unHelpful $ sampleField opts)
+                                (Field . unHelpful $ entityField opts)
+                                (Field . unHelpful $ valueField opts)
+                             )
+                        . V.tail
+                        $ csvContents
+        sampleMap    = toSampleMap entities
         normalizeMap = normalize
                         (maybe StandardScore read . unHelpful . method $ opts)
         result = (\ x
                  -> maybe
                         x
                         ( normalizeMap
-                        . flip
-                            ( normalizeBySample
-                                (fmap EntitySep . unHelpful . entityDiff $ opts)
-                            )
-                            x
+                        . flip (normalizeBySample synonymFlag eSep) x
                         )
-                        (fmap NormSampleString . unHelpful . bySample $ opts)
+                        sampleDiff
                  )
                . normalizeMap
                $ sampleMap

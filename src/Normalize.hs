@@ -16,6 +16,7 @@ module Normalize
     ) where
 
 -- Standard
+import Data.Ord
 import Data.List
 import qualified Data.Map.Strict as Map
 import qualified Data.Sequence as Seq
@@ -52,12 +53,15 @@ normalize StandardScore = Map.map standardScore
 -- normalized values from "normalizeMe" are divided by the normalized values
 -- from "normalizeMeByThis". This string must make the latter become the former,
 -- so "By" would not work as it would become "normalizeMeThis".
-normalizeBySample :: Maybe EntitySep
+normalizeBySample :: SynonymFlag
+                  -> Maybe EntitySep
                   -> NormSampleString
                   -> Map.Map Sample (V.Vector Entity)
                   -> Map.Map Sample (V.Vector Entity)
-normalizeBySample entitySep normSampleString =
-    Map.map (V.fromList . concatMap (divideBySample . reverse . sort))
+normalizeBySample synonymFlag entitySep normSampleString =
+    Map.map ( V.fromList
+            . concatMap (divideBySample synonymFlag . reverse . sort)
+            )
         . Map.map groupDivisors
         . Map.mapKeysWith
             (V.++)
@@ -77,19 +81,27 @@ groupDivisors = V.fromList
               . fmap (over _2 Seq.singleton)
               . V.toList
 
--- | The actual subtraction (Z scores) of dividends by divisor.
-divideBySample :: [(Divisor, Entity)] -> [Entity]
-divideBySample []                                      =
+-- | The actual subtraction (Z scores) of dividends by divisor. If there are too
+-- many divisors, we assume they are a synonym if the SynonymFlag is true, so
+-- we only take into account the highest intensity synonym.
+divideBySample :: SynonymFlag -> [(Divisor, Entity)] -> [Entity]
+divideBySample _ []                                    =
     error $ "Empty division in divideBySample."
-divideBySample [(Divisor True, _)]                     = []
-divideBySample [(Divisor False, x)]                    =
+divideBySample _ [(Divisor True, _)]                   = []
+divideBySample _ [(Divisor False, x)]                  =
     error $ "No pair found for: " ++ show x
-divideBySample ((Divisor True, x):(Divisor True, y):_) =
+divideBySample (SynonymFlag True) all@((Divisor True, x):(Divisor True, y):xs) =
+    divideBySample (SynonymFlag False)
+        . (:xs)
+        . maximumBy (comparing (_value . snd))
+        . filter (unDivisor . fst)
+        $ all
+divideBySample (SynonymFlag False) ((Divisor True, x):(Divisor True, y):_) =
     error $ "Too many divisors found including: "
          ++ (show x)
          ++ " and "
          ++ (show y)
-divideBySample ((Divisor True, x):xs)                  =
+divideBySample _ ((Divisor True, x):xs)                  =
     fmap ((-~) value (_value x) . snd) xs
 
 -- | Tag all divisors in a sample.
