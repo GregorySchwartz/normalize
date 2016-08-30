@@ -16,6 +16,7 @@ module Load
 import Data.Maybe
 import qualified Data.Map.Strict as Map
 import qualified Data.Sequence as Seq
+import Data.Monoid
 
 -- Cabal
 import qualified Data.Vector as V
@@ -40,8 +41,13 @@ csvRowToEntity header labelF sampleF entityF valueF row =
             fromMaybe "" . fmap ((row V.!) . flip fieldIndex header) $ labelF
         , _sample  = row V.! (fieldIndex sampleF header)
         , _entity  = row V.! (fieldIndex entityF header)
-        , _value   =
-            either error fst . T.double $ row V.! (fieldIndex valueF header)
+        , _value   = (\ x -> either (error . (<> (": " <> show x))) fst
+                           . T.double
+                           $ x
+                     )
+                   . (V.!) row
+                   . fieldIndex valueF
+                   $ header
         }
 
 -- | Get the index of a field in the header of a csv file.
