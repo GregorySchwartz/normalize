@@ -89,9 +89,9 @@ divideBySample _ []                                    =
     error $ "Empty division in divideBySample."
 divideBySample _ [(Divisor True, _)]                   = []
 divideBySample _ ((Divisor False, _):_)                = []
-divideBySample (SynonymFlag True) all@((Divisor True, x):(Divisor True, y):xs) =
+divideBySample (SynonymFlag True) all@((Divisor True, x):(Divisor True, y):_) =
     divideBySample (SynonymFlag False)
-        . (:xs)
+        . (: (filter (not . unDivisor . fst) all))
         . maximumBy (comparing (_value . snd))
         . filter (unDivisor . fst)
         $ all
