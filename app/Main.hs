@@ -65,7 +65,7 @@ main = do
                          )
                     . V.tail
                     $ csvContents
-        sampleMap  = toSampleMap entities
+        sampleMap    = toSampleMap entities
         normalizeMap = normalize
                         (maybe StandardScore read . unHelpful . method $ opts)
         result = (\ x
