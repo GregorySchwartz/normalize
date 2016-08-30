@@ -100,7 +100,7 @@ divideBySample (SynonymFlag False) ((Divisor True, x):(Divisor True, y):_) =
          ++ (show x)
          ++ " and "
          ++ (show y)
-divideBySample _ ((Divisor True, x):xs)                  =
+divideBySample _ ((Divisor True, x):xs)                =
     fmap ((-~) value (_value x) . snd) xs
 
 -- | Tag all divisors in a sample.
