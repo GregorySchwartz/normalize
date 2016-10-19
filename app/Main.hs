@@ -92,7 +92,7 @@ main = do
                  )
                . normalizeMap
                $ sampleMap
-        formatted = CL.append (CL.pack "label,sample,entity,value")
+        formatted = CL.append (CL.pack "label,sample,entity,numSamples,value")
                   . CL.dropWhile (/= '\n')
                   . CSV.encodeDefaultOrderedByName
                   . concatMap V.toList

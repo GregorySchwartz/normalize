@@ -43,8 +43,8 @@ data Entity = Entity
                 { _label      :: !T.Text
                 , _sample     :: !T.Text
                 , _entity     :: !T.Text
-                , _value      :: !Double
                 , _numSamples :: !Int
+                , _value      :: !Double
                 }
               deriving (Eq, Ord, Show, Generic)
 makeLenses ''Entity
