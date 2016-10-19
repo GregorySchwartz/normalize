@@ -9,20 +9,24 @@ Collections the functions pertaining to the loading of data.
 
 module Load
     ( csvRowToEntity
+    , filterEntitiesBy
     , toSampleMap
     ) where
 
 -- Standard
 import Data.Maybe
+import Data.List
 import qualified Data.Map.Strict as Map
 import qualified Data.Sequence as Seq
 import Data.Monoid
+import Data.Function (on)
 
 -- Cabal
 import qualified Data.Vector as V
 import qualified Data.Text as T
 import qualified Data.Text.Read as T
 import qualified Data.Csv as CSV
+import Control.Lens
 
 -- Local
 import Types
@@ -37,17 +41,18 @@ csvRowToEntity :: V.Vector T.Text
                -> Entity
 csvRowToEntity header labelF sampleF entityF valueF row =
     Entity
-        { _label   =
+        { _label      =
             fromMaybe "" . fmap ((row V.!) . flip fieldIndex header) $ labelF
-        , _sample  = row V.! (fieldIndex sampleF header)
-        , _entity  = row V.! (fieldIndex entityF header)
-        , _value   = (\ x -> either (error . (<> (": " <> show x))) fst
-                           . T.double
-                           $ x
-                     )
-                   . (V.!) row
-                   . fieldIndex valueF
-                   $ header
+        , _sample     = row V.! (fieldIndex sampleF header)
+        , _entity     = row V.! (fieldIndex entityF header)
+        , _value      = (\ x -> either (error . (<> (": " <> show x))) fst
+                              . T.double
+                              $ x
+                        )
+                      . (V.!) row
+                      . fieldIndex valueF
+                      $ header
+        , _numSamples = 0
         }
 
 -- | Get the index of a field in the header of a csv file.
@@ -55,6 +60,15 @@ fieldIndex :: Field -> V.Vector T.Text -> Int
 fieldIndex (Field f) =
     fromMaybe (error ("Column " ++ T.unpack f ++ " not found"))
         . V.findIndex (== f)
+        
+-- | Filter out entities that appear less than the specified amount and record
+-- their weight.
+filterEntitiesBy :: NumSamples -> [Entity] -> [Entity]
+filterEntitiesBy (NumSamples n) =
+    concatMap (\xs -> fmap (set numSamples . length $ xs) xs)
+        . filter ((>= n) . length)
+        . groupBy ((==) `on` _entity)
+        . sortBy (compare `on` _entity)
 
 -- | Convert entities to a sample map, where each sample contains
 -- a collection of entities.

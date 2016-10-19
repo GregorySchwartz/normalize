@@ -44,6 +44,8 @@ data Options = Options { labelField             :: Maybe T.Text
                                     <?> "When normalizing by sample, if the divisor appears multiple times we assume those are synonyms. Here, we would remove the synonym with the smaller intensity. If not set, errors out and provides the synonym name."
                        , method                 :: Maybe String
                                     <?> "([StandardScore]) The method for standardization of the samples."
+                       , filterEntities         :: Maybe Int
+                                    <?> "([0] | INT) Whether to remove entities that appear less than this times before normalizing."
                        }
                deriving (Generic, Show)
 
@@ -63,7 +65,12 @@ main = do
     let synonymFlag  = SynonymFlag . unHelpful . bySampleRemoveSynonyms $ opts
         eSep         = fmap EntitySep . unHelpful . entityDiff $ opts
         sampleDiff   = fmap NormSampleString . unHelpful . bySample $ opts
-        entities     = V.map ( csvRowToEntity
+        filterNumSamples =
+            NumSamples . fromMaybe 0 . unHelpful . filterEntities $ opts
+        entities     = V.fromList
+                     . filterEntitiesBy filterNumSamples
+                     . V.toList
+                     . V.map ( csvRowToEntity
                                 (V.head csvContents)
                                 (fmap Field . unHelpful $ labelField opts)
                                 (Field . unHelpful $ sampleField opts)

@@ -23,6 +23,7 @@ import Control.Lens
 newtype EntitySep        = EntitySep { unEntitySep :: T.Text }
 newtype EntityName       = EntityName { unEntityName :: T.Text }
                            deriving (Eq, Ord)
+newtype NumSamples       = NumSamples { unNumSamples :: Int }
 newtype Field            = Field { unField :: T.Text } deriving (Show, Generic)
 newtype Label            = Label { unLabel :: T.Text } deriving (Eq, Ord)
 newtype Sample           = Sample { unSample :: T.Text }
@@ -39,10 +40,11 @@ newtype NormSampleString = NormSampleString { unNormSampleString :: T.Text }
 data Method = StandardScore deriving (Eq, Read, Show)
 
 data Entity = Entity
-                { _label     :: !T.Text
-                , _sample    :: !T.Text
-                , _entity    :: !T.Text
-                , _value     :: !Double
+                { _label      :: !T.Text
+                , _sample     :: !T.Text
+                , _entity     :: !T.Text
+                , _value      :: !Double
+                , _numSamples :: !Int
                 }
               deriving (Eq, Ord, Show, Generic)
 makeLenses ''Entity
