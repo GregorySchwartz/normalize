@@ -1,5 +1,5 @@
 name:                normalize
-version:             0.1.1.0
+version:             0.2.0.0
 synopsis:            Normalize data using a variety of methods.
 description:         Please see README.md
 homepage:            http://github.com/GregorySchwartz/normalize#readme
@@ -18,6 +18,7 @@ library
   exposed-modules:     Types
                      , Load
                      , Normalize
+                     , Filter
   build-depends:       base >= 4.7 && < 5
                      , containers
                      , lens

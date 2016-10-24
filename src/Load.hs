@@ -9,7 +9,6 @@ Collections the functions pertaining to the loading of data.
 
 module Load
     ( csvRowToEntity
-    , filterEntitiesBy
     , toSampleMap
     ) where
 
@@ -60,15 +59,6 @@ fieldIndex :: Field -> V.Vector T.Text -> Int
 fieldIndex (Field f) =
     fromMaybe (error ("Column " ++ T.unpack f ++ " not found"))
         . V.findIndex (== f)
-        
--- | Filter out entities that appear less than the specified amount and record
--- their weight.
-filterEntitiesBy :: NumSamples -> [Entity] -> [Entity]
-filterEntitiesBy (NumSamples n) =
-    concatMap (\xs -> fmap (set numSamples . length $ xs) xs)
-        . filter ((>= n) . length)
-        . groupBy ((==) `on` _entity)
-        . sortBy (compare `on` _entity)
 
 -- | Convert entities to a sample map, where each sample contains
 -- a collection of entities.

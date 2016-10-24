@@ -24,6 +24,7 @@ newtype EntitySep        = EntitySep { unEntitySep :: T.Text }
 newtype EntityName       = EntityName { unEntityName :: T.Text }
                            deriving (Eq, Ord)
 newtype NumSamples       = NumSamples { unNumSamples :: Int }
+newtype ValueThreshold   = ValueThreshold { unValueThreshold :: Double }
 newtype Field            = Field { unField :: T.Text } deriving (Show, Generic)
 newtype Label            = Label { unLabel :: T.Text } deriving (Eq, Ord)
 newtype Sample           = Sample { unSample :: T.Text }
