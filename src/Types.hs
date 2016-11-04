@@ -25,6 +25,7 @@ newtype EntityName       = EntityName { unEntityName :: T.Text }
                            deriving (Eq, Ord)
 newtype NumSamples       = NumSamples { unNumSamples :: Int }
 newtype ValueThreshold   = ValueThreshold { unValueThreshold :: Double }
+newtype StdDevThreshold  = StdDevThreshold { unStdDevThreshold :: Double }
 newtype Field            = Field { unField :: T.Text } deriving (Show, Generic)
 newtype Label            = Label { unLabel :: T.Text } deriving (Eq, Ord)
 newtype Sample           = Sample { unSample :: T.Text }
@@ -38,7 +39,7 @@ newtype NormSampleString = NormSampleString { unNormSampleString :: T.Text }
 -- Advanced
 
 -- Algebraic
-data Method = StandardScore deriving (Eq, Read, Show)
+data Method = StandardScore | UpperQuartile | None deriving (Eq, Read, Show)
 
 data Entity = Entity
                 { _label      :: !T.Text

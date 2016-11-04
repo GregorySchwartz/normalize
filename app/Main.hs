@@ -44,11 +44,13 @@ data Options = Options { labelField             :: Maybe T.Text
                        , bySampleRemoveSynonyms :: Bool
                                     <?> "When normalizing by sample, if the divisor appears multiple times we assume those are synonyms. Here, we would remove the synonym with the smaller intensity. If not set, errors out and provides the synonym name."
                        , method                 :: Maybe String
-                                    <?> "([StandardScore]) The method for standardization of the samples."
+                                    <?> "([StandardScore] | UpperQuartile | None) The method for standardization of the samples."
                        , filterEntitiesMissing  :: Maybe Int
                                     <?> "([0] | INT) Whether to remove entities that appear less than this many times after normalizing."
                        , filterEntitiesValue    :: Maybe Double
-                                    <?> "Whether to remove entities with absolute value less than or equal to this number after normalizing but before filterEntitiesMissing."
+                                    <?> "([Nothing] | Double) Whether to remove entities in filterEntitiesMissing but also counting entities with a value of this or less as missing."
+                       , filterEntitiesStdDev :: Maybe Double
+                                    <?> "([Nothing] | DOUBLE) Remove entities that have less than this value for their standard deviation among all samples they appear in, after normalization."
                        }
                deriving (Generic, Show)
 
@@ -72,6 +74,8 @@ main = do
             NumSamples . fromMaybe 0 . unHelpful . filterEntitiesMissing $ opts
         filterValue      =
             fmap ValueThreshold . unHelpful . filterEntitiesValue $ opts
+        filterStdDev     =
+            fmap StdDevThreshold . unHelpful . filterEntitiesStdDev $ opts
         entities     = V.map ( csvRowToEntity
                                 (V.head csvContents)
                                 (fmap Field . unHelpful $ labelField opts)
@@ -84,7 +88,7 @@ main = do
         sampleMap    = toSampleMap entities
         normalizeMap = normalize
                         (maybe StandardScore read . unHelpful . method $ opts)
-        result = filterEntitiesBy filterValue filterNumSamples
+        result = filterEntitiesBy filterValue filterStdDev filterNumSamples
                . (\ x
                  -> maybe
                         x

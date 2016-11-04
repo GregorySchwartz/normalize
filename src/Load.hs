@@ -18,6 +18,7 @@ import Data.List
 import qualified Data.Map.Strict as Map
 import qualified Data.Sequence as Seq
 import Data.Monoid
+import qualified Data.Foldable as F
 import Data.Function (on)
 
 -- Cabal
@@ -63,6 +64,7 @@ fieldIndex (Field f) =
 -- | Convert entities to a sample map, where each sample contains
 -- a collection of entities.
 toSampleMap :: V.Vector Entity -> Map.Map Sample (V.Vector Entity)
-toSampleMap = Map.fromListWith (V.++)
+toSampleMap = Map.map (V.fromList . F.toList)
+            . Map.fromListWith (Seq.><)
             . V.toList
-            . V.map (\ !x -> (Sample $ _sample x, V.singleton x))
+            . V.map (\ !x -> (Sample $ _sample x, Seq.singleton x))

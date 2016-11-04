@@ -26,6 +26,7 @@ import Data.Function (on)
 -- Cabal
 import qualified Data.Vector as V
 import qualified Data.Text as T
+import Statistics.Quantile
 import qualified Statistics.Sample as Stat
 import Control.Lens
 
@@ -44,6 +45,8 @@ normalize :: Method
           -> Map.Map Sample (V.Vector Entity)
           -> Map.Map Sample (V.Vector Entity)
 normalize StandardScore = Map.map standardScore
+normalize UpperQuartile = Map.map upperQuartileNormalize
+normalize None          = id
 
 -- | Normalize a sample (1) by another sample (2) by division. The
 -- NormSampleString contains the string that differentiates (1) from (2).
@@ -100,7 +103,7 @@ divideBySample (SynonymFlag False) ((Divisor True, x):(Divisor True, y):_) =
          ++ (show x)
          ++ " and "
          ++ (show y)
-divideBySample _ ((Divisor True, x):xs)                =
+divideBySample _ ((Divisor True, x):xs)                                    =
     fmap ((-~) value (_value x) . snd) xs
 
 -- | Tag all divisors in a sample.
@@ -129,3 +132,11 @@ tagDivisor sep (NormSampleString needle) (Sample haystack) !e =
     entityName Nothing              = EntityName . _entity $ e
     entityName (Just (EntitySep s)) =
         EntityName . head . T.splitOn s . _entity $ e
+
+-- | Normalize by the upper quartile method, log 2 transformed.
+upperQuartileNormalize :: V.Vector Entity -> V.Vector Entity
+upperQuartileNormalize xs =
+    fmap (over value ((logBase 2) . (/ uqVal zeroFiltered))) zeroFiltered
+  where
+    zeroFiltered = V.filter ((> 0) . _value) xs
+    uqVal = continuousBy (ContParam 1 1) 3 4 . fmap _value
