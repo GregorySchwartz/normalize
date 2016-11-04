@@ -29,12 +29,12 @@ import qualified Statistics.Sample as Stat
 import Types
 
 -- | Filter out entities that have less than the specified threshold.
-filterValue :: ValueThreshold -> [Entity] -> [Entity]
-filterValue (ValueThreshold x) = filter ((>= x) . _value)
+filterValue :: ValueThreshold -> V.Vector Entity -> V.Vector Entity
+filterValue (ValueThreshold x) = V.filter ((>= x) . _value)
 
 -- | Do these values have a standard deviation less than the specified threshold?
-stdDevP :: StdDevThreshold -> [Entity] -> Bool
-stdDevP (StdDevThreshold x) = (>= x) . Stat.stdDev . V.fromList . fmap _value
+stdDevP :: StdDevThreshold -> V.Vector Entity -> Bool
+stdDevP (StdDevThreshold x) = (>= x) . Stat.stdDev . fmap _value
 
 -- | Filter out entities that appear less than the specified amount and record
 -- the remaining entities' weight.
@@ -46,7 +46,7 @@ getViableEntities
     -> [Entity]
 getViableEntities vt st (NumSamples n) =
     concatMap (\xs -> fmap (set numSamples . length $ xs) xs)
-        . filter ((>= n) . length . maybe id filterValue vt)
+        . filter (pass . V.fromList)
         . groupBy ((==) `on` _entity)
         . sortBy (compare `on` _entity)
   where
