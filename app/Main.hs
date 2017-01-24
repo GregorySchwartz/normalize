@@ -63,9 +63,9 @@ main = do
                       \ proteins) by column (samples)."
 
     -- No header so we can READ the header (ugh).
-    csvContents <- fmap
-                    (either error id . CSV.decode CSV.NoHeader)
-                    CL.getContents
+    (_, csvContents) <- fmap
+                            (either error id . CSV.decodeByName)
+                            CL.getContents
 
     let synonymFlag  = SynonymFlag . unHelpful . bySampleRemoveSynonyms $ opts
         eSep         = fmap EntitySep . unHelpful . entityDiff $ opts
@@ -77,14 +77,12 @@ main = do
         filterStdDev     =
             fmap StdDevThreshold . unHelpful . filterEntitiesStdDev $ opts
         entities     = V.map ( csvRowToEntity
-                                (V.head csvContents)
                                 (fmap Field . unHelpful $ labelField opts)
                                 (Field . unHelpful $ sampleField opts)
                                 (Field . unHelpful $ entityField opts)
                                 (Field . unHelpful $ valueField opts)
                              )
-                        . V.tail
-                        $ csvContents
+                     $ csvContents
         sampleMap    = toSampleMap entities
         normalizeMap = normalize
                         (maybe StandardScore read . unHelpful . method $ opts)

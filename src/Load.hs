@@ -22,44 +22,43 @@ import qualified Data.Foldable as F
 import Data.Function (on)
 
 -- Cabal
-import qualified Data.Vector as V
+import Control.Lens
+import Control.Monad
+import qualified Data.Csv as CSV
 import qualified Data.Text as T
 import qualified Data.Text.Read as T
-import qualified Data.Csv as CSV
-import Control.Lens
+import qualified Data.Vector as V
 
 -- Local
 import Types
 
 -- | Convert CSV entries into entities.
-csvRowToEntity :: V.Vector T.Text
-               -> Maybe Field
+csvRowToEntity :: Maybe Field
                -> Field
                -> Field
                -> Field
-               -> V.Vector T.Text
+               -> Map.Map T.Text T.Text
                -> Entity
-csvRowToEntity header labelF sampleF entityF valueF row =
+csvRowToEntity labelF (Field sampleF) (Field entityF) (Field valueF) row =
     Entity
         { _label      =
-            fromMaybe "" . fmap ((row V.!) . flip fieldIndex header) $ labelF
-        , _sample     = row V.! (fieldIndex sampleF header)
-        , _entity     = row V.! (fieldIndex entityF header)
+            fromMaybe "" . join . fmap (flip Map.lookup row . unField) $ labelF
+        , _sample     = getMap "sample" sampleF
+        , _entity     = getMap "entity" entityF
         , _value      = (\ x -> either (error . (<> (": " <> show x))) fst
                               . T.double
                               $ x
                         )
-                      . (V.!) row
-                      . fieldIndex valueF
-                      $ header
+                      . getMap "value"
+                      $ valueF
         , _numSamples = 0
         }
-
--- | Get the index of a field in the header of a csv file.
-fieldIndex :: Field -> V.Vector T.Text -> Int
-fieldIndex (Field f) =
-    fromMaybe (error ("Column " ++ T.unpack f ++ " not found"))
-        . V.findIndex (== f)
+  where
+    getMap :: String -> T.Text -> T.Text
+    getMap x f =
+        fromMaybe (error ("Cannot find " <> x <> " field. " <> show row))
+            . Map.lookup f
+            $ row
 
 -- | Convert entities to a sample map, where each sample contains
 -- a collection of entities.
