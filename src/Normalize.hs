@@ -11,7 +11,8 @@ samples.
 {-# LANGUAGE TupleSections #-}
 
 module Normalize
-    ( normalize
+    ( logTransform
+    , normalize
     , normalizeBySample
     ) where
 
@@ -32,6 +33,10 @@ import Control.Lens
 
 -- Local
 import Types
+
+-- | Log transform the normalize map.
+logTransform :: Base -> Map.Map Sample (V.Vector Entity) -> Map.Map Sample (V.Vector Entity)
+logTransform (Base base) = (fmap . fmap) (over value (logBase 2))
 
 -- | Normalize a sample by standard scores.
 standardScore :: V.Vector Entity -> V.Vector Entity
@@ -136,7 +141,7 @@ tagDivisor sep (NormSampleString needle) (Sample haystack) !e =
 -- | Normalize by the upper quartile method, log 2 transformed.
 upperQuartileNormalize :: V.Vector Entity -> V.Vector Entity
 upperQuartileNormalize xs =
-    fmap (over value ((logBase 2) . (/ uqVal zeroFiltered))) zeroFiltered
+    fmap (over value (/ uqVal zeroFiltered)) zeroFiltered
   where
     zeroFiltered = V.filter ((> 0) . _value) xs
     uqVal = continuousBy (ContParam 1 1) 3 4 . fmap _value
