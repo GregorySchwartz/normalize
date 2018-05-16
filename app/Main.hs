@@ -1,7 +1,8 @@
 {- normalize
 Gregory W. Schwartz
 
-Blah's the blah in the blah
+Normalizes the data (entities, for instance genes or proteins) by column
+(samples).
 -}
 
 {-# LANGUAGE DeriveGeneric #-}
