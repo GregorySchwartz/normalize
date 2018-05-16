@@ -1,7 +1,7 @@
 name:                normalize
 version:             0.3.0.0
 synopsis:            Normalize data using a variety of methods.
-description:         Please see README.md
+description:         Normalize data using a variety of methods. For use with csv files.
 homepage:            http://github.com/GregorySchwartz/normalize#readme
 license:             GPL-3
 license-file:        LICENSE
