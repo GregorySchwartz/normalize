@@ -1,0 +1,60 @@
+* normalize
+
+Normalizes the data (entities, for instance genes or proteins) by column
+(samples).
+
+#+BEGIN_EXAMPLE
+normalize, Gregory W. Schwartz. Normalizes the data (entities, for instance
+genes or proteins) by column (samples).
+
+Usage: normalize [--labelField TEXT] --sampleField TEXT --entityField TEXT
+                 --valueField TEXT [--entityDiff TEXT] [--bySample TEXT]
+                 [--bySampleRemoveSynonyms] [--method STRING]
+                 [--filterEntitiesMissing INT] [--filterEntitiesValue DOUBLE]
+                 [--filterEntitiesStdDev DOUBLE] [--base DOUBLE]
+
+Available options:
+  -h,--help                Show this help text
+  --labelField TEXT        The column containing the label for the entry.
+  --sampleField TEXT       The column containing the sample for the entry.
+  --entityField TEXT       The column containing the id for the entity in the
+                           entry.
+  --valueField TEXT        The column field containing the value for the entry.
+  --entityDiff TEXT        When comparing entities that are the same, ignore the
+                           text after this separator. Used for the bySample
+                           normalization. For example, if we have a strings
+                           ARG29_5 and ARG29_7 that we both want to be divided
+                           by another entity in another sample called ARG29, we
+                           would set this string to be "_"
+  --bySample TEXT          Normalize as usual, but at the end use this string to
+                           differentiate the sample field from the normalization
+                           samples, then divide the matching samples with these
+                           samples and renormalize. For instance, if we want to
+                           normalize "normalizeMe" by "normalizeMeByThis", we
+                           would set this string to be "ByThis" so the
+                           normalized values from "normalizeMe" are divided by
+                           the normalized values from "normalizeMeByThis". This
+                           string must make the latter become the former, so
+                           "By" would not work as it would become
+                           "normalizeMeThis". If there is no divisor, we remove
+                           that entity.
+  --bySampleRemoveSynonyms When normalizing by sample, if the divisor appears
+                           multiple times we assume those are synonyms. Here, we
+                           would remove the synonym with the smaller intensity.
+                           If not set, errors out and provides the synonym name.
+  --method STRING          ([StandardScore] | UpperQuartile | None) The method
+                           for standardization of the samples.
+  --filterEntitiesMissing INT
+                           ([0] | INT) Whether to remove entities that appear
+                           less than this many times after normalizing.
+  --filterEntitiesValue DOUBLE
+                           ([Nothing] | DOUBLE) Whether to remove entities in
+                           filterEntitiesMissing but also counting entities with
+                           a value of this or less as missing.
+  --filterEntitiesStdDev DOUBLE
+                           ([Nothing] | DOUBLE) Remove entities that have less
+                           than this value for their standard deviation among
+                           all samples they appear in, after normalization.
+  --base DOUBLE            ([Nothing] | DOUBLE) Log transform the data at the
+                           end using this base but before filtering.
+#+END_EXAMPLE
