@@ -63,7 +63,7 @@ main :: IO ()
 main = do
     opts <- getRecord "normalize, Gregory W. Schwartz.\
                       \ Normalizes the data (entities, for instance genes or\
-                      \ proteins) by column (samples)."
+                      \ proteins) by column (samples). Can read stdin."
 
     -- No header so we can READ the header (ugh).
     (_, csvContents) <- fmap

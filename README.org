@@ -1,11 +1,11 @@
 * normalize
 
 Normalizes the data (entities, for instance genes or proteins) by column
-(samples).
+(samples). Can read stdin.
 
 #+BEGIN_EXAMPLE
 normalize, Gregory W. Schwartz. Normalizes the data (entities, for instance
-genes or proteins) by column (samples).
+genes or proteins) by column (samples). Can read stdin.
 
 Usage: normalize [--labelField TEXT] --sampleField TEXT --entityField TEXT
                  --valueField TEXT [--entityDiff TEXT] [--bySample TEXT]
