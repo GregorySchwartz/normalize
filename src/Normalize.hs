@@ -25,14 +25,16 @@ import qualified Data.Foldable as F
 import Data.Function (on)
 
 -- Cabal
-import qualified Data.Vector as V
-import qualified Data.Text as T
-import Statistics.Quantile
-import qualified Statistics.Sample as Stat
 import Control.Lens
+import Statistics.Quantile
+import qualified Data.Sparse.Common as S
+import qualified Data.Text as T
+import qualified Data.Vector as V
+import qualified Statistics.Sample as Stat
 
 -- Local
 import Types
+import Utility
 
 -- | Log transform the normalize map.
 logTransform :: Base -> Map.Map Sample (V.Vector Entity) -> Map.Map Sample (V.Vector Entity)
@@ -52,6 +54,14 @@ normalize :: Method
 normalize StandardScore = Map.map standardScore
 normalize UpperQuartile = Map.map upperQuartileNormalize
 normalize None          = id
+normalize _             = error "Method not supported by normalize."
+
+-- | Normalize all samples by a specific method using a sparse matrix.
+normalizeSparse :: Method -> S.SpMatrix Double -> S.SpMatrix Double
+normalizeSparse method@QuantileMedian  = quantileNormalize method
+normalizeSparse method@QuantileAverage = quantileNormalize method
+normalizeSparse None            = id
+normalizeSparse _ = error "Method not supported by normalizeSparse."
 
 -- | Normalize a sample (1) by another sample (2) by division. The
 -- NormSampleString contains the string that differentiates (1) from (2).
@@ -145,3 +155,16 @@ upperQuartileNormalize xs =
   where
     zeroFiltered = V.filter ((> 0) . _value) xs
     uqVal = continuousBy (ContParam 1 1) 3 4 . fmap _value
+
+-- | Quantile normalization for sparse matrices, ignoring zeros.
+quantileNormalize :: Method -> S.SpMatrix Double -> S.SpMatrix Double
+quantileNormalize method mat =
+    fmap (\x -> S.lookupDenseSV (x - 1) summaryVec) rankMat
+  where
+    summaryFunc QuantileMedian  = medianSparseVector
+    summaryFunc QuantileAverage = avgSparseVector
+    summaryFunc _ = error "Unsupported method for quantile normalization."
+    summaryVec =
+        S.sparsifySV . S.vr . fmap (summaryFunc method) . S.toRowsL $ sortMat
+    sortMat    = S.fromColsL . fmap sortSparseVector . S.toColsL $ mat
+    rankMat    = S.fromColsL . fmap rankSparseVector . S.toColsL $ mat

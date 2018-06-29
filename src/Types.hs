@@ -40,7 +40,12 @@ newtype NormSampleString = NormSampleString { unNormSampleString :: T.Text }
 -- Advanced
 
 -- Algebraic
-data Method = StandardScore | UpperQuartile | None deriving (Eq, Read, Show)
+data Method = StandardScore
+            | UpperQuartile
+            | QuantileMedian
+            | QuantileAverage
+            | None
+            deriving (Eq, Read, Show)
 
 data Entity = Entity
                 { _label      :: !T.Text
