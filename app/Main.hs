@@ -45,7 +45,7 @@ data Options = Options { labelField             :: Maybe T.Text
                        , bySampleRemoveSynonyms :: Bool
                                     <?> "When normalizing by sample, if the divisor appears multiple times we assume those are synonyms. Here, we would remove the synonym with the smaller intensity. If not set, errors out and provides the synonym name."
                        , method                 :: Maybe String
-                                    <?> "([StandardScore] | UpperQuartile | None) The method for standardization of the samples."
+                                    <?> "([StandardScore] | UpperQuartile | QuantileMedian | QuantileAverage | None) The method for standardization of the samples. The Quantile* methods expect the same number of entities for each sample. "
                        , filterEntitiesMissing  :: Maybe Int
                                     <?> "([0] | INT) Whether to remove entities that appear less than this many times after normalizing."
                        , filterEntitiesValue    :: Maybe Double

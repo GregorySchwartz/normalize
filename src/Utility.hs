@@ -7,10 +7,11 @@ Collections helper functions for the program.
 {-# LANGUAGE BangPatterns #-}
 
 module Utility
-    ( sortSparseVector
-    , rankSparseVector
-    , medianSparseVector
-    , avgSparseVector
+    ( sortVector
+    , rankVector
+    , medianVector
+    , avgVector
+    , transposeSamples
     ) where
 
 -- Standard
@@ -23,33 +24,41 @@ import Statistics.Quantile
 import Statistics.Sample (mean)
 import qualified Data.Map.Strict as Map
 import qualified Data.Set as Set
-import qualified Data.Sparse.Common as S
-import qualified Data.Vector.Unboxed as V
+import qualified Data.Vector as V
+import qualified Data.Vector.Algorithms.Merge as V
 
 -- Local
+import Types
 
--- | Find the average of a sparse vector, ignoring zeros.
-avgSparseVector :: S.SpVector Double -> Double
-avgSparseVector xs = mean . V.fromList . fmap snd . S.toListSV $ xs
+-- | Find the average of a vector.
+avgVector :: V.Vector Double -> Double
+avgVector = mean
 
--- | Find the median of a sparse vector, ignoring zeros.
-medianSparseVector :: S.SpVector Double -> Double
-medianSparseVector xs =
-    continuousBy s 2 4 . V.fromList . fmap snd . S.toListSV $ xs
+-- | Find the median of a vector.
+medianVector :: V.Vector Double -> Double
+medianVector = continuousBy s 2 4
 
--- | Sort a sparse vector, ignoring zeros.
-sortSparseVector :: S.SpVector Double -> S.SpVector Double
-sortSparseVector xs =
-    S.fromListDenseSV (S.svDim xs) . sort . fmap snd . S.toListSV $ xs
+-- | Sort a vector of elements.
+sortVector :: V.Vector Entity -> V.Vector Entity
+sortVector = V.modify (V.sortBy (compare `on` view value))
 
--- | Get the rank transformed vector of a sparse vector, ignoring zeros.
-rankSparseVector :: S.SpVector Double -> S.SpVector Int
-rankSparseVector xs = fmap (\k -> Map.findWithDefault 0 k rankMap) xs
+-- | Get the rank transformed vector of elements.
+rankVector :: V.Vector Entity -> V.Vector Entity
+rankVector xs = V.map (over value (flip (Map.findWithDefault 0) rankMap)) xs
   where
     rankMap = Map.fromList
-            . flip zip [1,2..]
+            . flip zip [0,1..]
             . Set.toList
             . Set.fromList
-            . fmap snd
-            . S.toListSV
+            . fmap (view value)
+            . V.toList
             $ xs
+
+-- | Transpose sample map. Important: assumes same number of entities in each
+-- sample.
+transposeSamples :: Map.Map Sample (V.Vector Entity)
+                 -> [V.Vector Double]
+transposeSamples = fmap V.fromList
+                 . transpose
+                 . fmap (V.toList . fmap (view value))
+                 . Map.elems
